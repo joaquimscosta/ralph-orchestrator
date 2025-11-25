@@ -12,16 +12,24 @@ from .base import ToolAdapter, ToolResponse
 logger = logging.getLogger(__name__)
 
 try:
-    from claude_code_sdk import ClaudeCodeOptions, query
+    from claude_agent_sdk import ClaudeAgentOptions, query
     CLAUDE_SDK_AVAILABLE = True
 except ImportError:
-    CLAUDE_SDK_AVAILABLE = False
+    # Fallback to old package name for backwards compatibility
+    try:
+        from claude_code_sdk import ClaudeCodeOptions as ClaudeAgentOptions, query
+        CLAUDE_SDK_AVAILABLE = True
+    except ImportError:
+        CLAUDE_SDK_AVAILABLE = False
 
 
 class ClaudeAdapter(ToolAdapter):
     """Adapter for Claude using the Python SDK."""
     
-    def __init__(self, verbose: bool = False):
+    # Default max buffer size: 10MB (handles large screenshots from chrome-devtools-mcp)
+    DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024
+
+    def __init__(self, verbose: bool = False, max_buffer_size: int = None):
         super().__init__("claude")
         self.sdk_available = CLAUDE_SDK_AVAILABLE
         self._system_prompt = None
@@ -29,6 +37,7 @@ class ClaudeAdapter(ToolAdapter):
         self._disallowed_tools = None
         self._enable_all_tools = False
         self._enable_web_search = True  # Enable WebSearch by default
+        self._max_buffer_size = max_buffer_size or self.DEFAULT_MAX_BUFFER_SIZE
         self.verbose = verbose
     
     def check_availability(self) -> bool:
@@ -157,9 +166,15 @@ class ClaudeAdapter(ToolAdapter):
             options_dict['cwd'] = cwd
             if self.verbose:
                 logger.info(f"Working directory: {cwd}")
-            
+
+            # Set max buffer size for handling large responses (e.g., screenshots)
+            max_buffer_size = kwargs.get('max_buffer_size', self._max_buffer_size)
+            options_dict['max_buffer_size'] = max_buffer_size
+            if self.verbose:
+                logger.info(f"Max buffer size: {max_buffer_size} bytes")
+
             # Create options
-            options = ClaudeCodeOptions(**options_dict)
+            options = ClaudeAgentOptions(**options_dict)
             
             # Log request details if verbose
             if self.verbose:
