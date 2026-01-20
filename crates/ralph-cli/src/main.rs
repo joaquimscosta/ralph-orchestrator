@@ -17,8 +17,9 @@ mod sop_runner;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use ralph_adapters::{
-    CliBackend, CliExecutor, ConsoleStreamHandler, PrettyStreamHandler, PtyConfig, PtyExecutor,
-    QuietStreamHandler, TuiStreamHandler, detect_backend,
+    CliBackend, CliExecutor, ConsoleStreamHandler, OutputFormat as BackendOutputFormat,
+    PrettyStreamHandler, PtyConfig, PtyExecutor, QuietStreamHandler, TuiStreamHandler,
+    detect_backend,
 };
 use ralph_core::{
     EventHistory, EventLogger, EventLoop, EventParser, EventRecord, RalphConfig, Record,
@@ -2117,6 +2118,11 @@ async fn execute_pty(
             .await
     } else {
         // Use streaming handler for non-interactive mode (respects verbosity)
+        // Use PrettyStreamHandler for StreamJson backends (Claude) on TTY for markdown rendering
+        // Use ConsoleStreamHandler for Text format backends (Kiro, Gemini, etc.) for immediate output
+        let use_pretty =
+            backend.output_format == BackendOutputFormat::StreamJson && stdout().is_terminal();
+
         match verbosity {
             Verbosity::Quiet => {
                 let mut handler = QuietStreamHandler;
@@ -2124,7 +2130,7 @@ async fn execute_pty(
                     .await
             }
             Verbosity::Normal => {
-                if stdout().is_terminal() {
+                if use_pretty {
                     let mut handler = PrettyStreamHandler::new(false);
                     exec.run_observe_streaming(prompt, interrupt_rx, &mut handler)
                         .await
@@ -2135,7 +2141,7 @@ async fn execute_pty(
                 }
             }
             Verbosity::Verbose => {
-                if stdout().is_terminal() {
+                if use_pretty {
                     let mut handler = PrettyStreamHandler::new(true);
                     exec.run_observe_streaming(prompt, interrupt_rx, &mut handler)
                         .await
