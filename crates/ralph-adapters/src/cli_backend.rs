@@ -94,10 +94,9 @@ impl CliBackend {
             args: vec![
                 "--dangerously-skip-permissions".to_string(),
                 "--verbose".to_string(),
-                "--output-format".to_string(),
-                "stream-json".to_string(),
-                "--disallowedTools".to_string(),
-                "TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet".to_string(),
+                "--output-format=stream-json".to_string(),
+                // Use = syntax to avoid variadic <tools...> consuming subsequent args.
+                "--disallowedTools=TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet".to_string(),
             ],
             prompt_mode: PromptMode::Arg,
             prompt_flag: Some("-p".to_string()),
@@ -117,8 +116,8 @@ impl CliBackend {
             command: "claude".to_string(),
             args: vec![
                 "--dangerously-skip-permissions".to_string(),
-                "--disallowedTools".to_string(),
-                "TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet".to_string(),
+                // Use = syntax to avoid variadic <tools...> consuming the positional prompt arg.
+                "--disallowedTools=TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet".to_string(),
             ],
             prompt_mode: PromptMode::Arg,
             prompt_flag: None,
@@ -561,10 +560,8 @@ mod tests {
             vec![
                 "--dangerously-skip-permissions",
                 "--verbose",
-                "--output-format",
-                "stream-json",
-                "--disallowedTools",
-                "TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
+                "--output-format=stream-json",
+                "--disallowedTools=TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
                 "-p",
                 "test prompt"
             ]
@@ -585,8 +582,7 @@ mod tests {
             args,
             vec![
                 "--dangerously-skip-permissions",
-                "--disallowedTools",
-                "TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
+                "--disallowedTools=TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
                 "test prompt"
             ]
         );
@@ -782,10 +778,8 @@ mod tests {
             vec![
                 "--dangerously-skip-permissions",
                 "--verbose",
-                "--output-format",
-                "stream-json",
-                "--disallowedTools",
-                "TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
+                "--output-format=stream-json",
+                "--disallowedTools=TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
                 "-p",
                 "test prompt"
             ]
@@ -1039,8 +1033,7 @@ mod tests {
             args,
             vec![
                 "--dangerously-skip-permissions",
-                "--disallowedTools",
-                "TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
+                "--disallowedTools=TodoWrite,TaskCreate,TaskUpdate,TaskList,TaskGet",
                 "test prompt"
             ]
         );
